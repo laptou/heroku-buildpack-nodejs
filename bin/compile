@@ -353,24 +353,28 @@ prune_devdependencies() {
   fi
 }
 
-if $YARN_2; then
-  meta_set "build-step" "save-cache"
-  cache_build | output "$LOG_FILE"
-  meta_set "build-step" "prune-dependencies"
-  header "Pruning devDependencies" | output "$LOG_FILE"
-  prune_devdependencies | output "$LOG_FILE"
-elif "$YARN" && "$USE_YARN_CACHE" && [[ "$(get_cache_directories "$BUILD_DIR")" == "" ]]; then
-  meta_set "build-step" "prune-dependencies"
-  header "Pruning devDependencies" | output "$LOG_FILE"
-  prune_devdependencies | output "$LOG_FILE"
-  meta_set "build-step" "save-cache"
-  cache_build | output "$LOG_FILE"
+if "$SKIP_PRUNE_DEV_DEPENDENCIES"; then
+    header "Not pruning devDependencies because SKIP_PRUNE_DEV_DEPENDENCIES is set" | output "$LOG_FILE"
 else
-  meta_set "build-step" "save-cache"
-  cache_build | output "$LOG_FILE"
-  meta_set "build-step" "prune-dependencies"
-  header "Pruning devDependencies" | output "$LOG_FILE"
-  prune_devdependencies | output "$LOG_FILE"
+  if "$YARN_2"; then
+    meta_set "build-step" "save-cache"
+    cache_build | output "$LOG_FILE"
+    meta_set "build-step" "prune-dependencies"
+    header "Pruning devDependencies" | output "$LOG_FILE"
+    prune_devdependencies | output "$LOG_FILE"
+  elif "$YARN" && "$USE_YARN_CACHE" && [[ "$(get_cache_directories "$BUILD_DIR")" == "" ]]; then
+    meta_set "build-step" "prune-dependencies"
+    header "Pruning devDependencies" | output "$LOG_FILE"
+    prune_devdependencies | output "$LOG_FILE"
+    meta_set "build-step" "save-cache"
+    cache_build | output "$LOG_FILE"
+  else
+    meta_set "build-step" "save-cache"
+    cache_build | output "$LOG_FILE"
+    meta_set "build-step" "prune-dependencies"
+    header "Pruning devDependencies" | output "$LOG_FILE"
+    prune_devdependencies | output "$LOG_FILE"
+  fi
 fi
 
 meta_set "build-step" "cleanup-script"
